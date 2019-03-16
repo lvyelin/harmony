@@ -289,7 +289,17 @@ func (node *Node) PostConsensusProcessing(newBlock *types.Block) {
 	utils.GetLogInstance().Info("Updating staking list")
 	node.UpdateStakingList(node.QueryStakeInfo())
 	node.printStakingList()
+
 	node.blockchain.StoreNewShardState(newBlock, &node.CurrentStakes)
+	node.Debug()
+}
+
+// Debug --
+func (node *Node) Debug() {
+	players, balances := node.GetResult()
+	for i := range players {
+		utils.GetLogInstance().Info("******RESULT****", "player", players[i], "balance", balances[i])
+	}
 }
 
 // AddNewBlock is usedd to add new block into the blockchain.
