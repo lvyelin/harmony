@@ -8,6 +8,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	proto "github.com/harmony-one/harmony/api/client/service/proto"
+	proto_node "github.com/harmony-one/harmony/api/proto/node"
+	"github.com/harmony-one/harmony/core/types"
 
 	"google.golang.org/grpc"
 )
@@ -37,6 +39,18 @@ func NewClient(ip, port string) *Client {
 // Close closes the Client.
 func (client *Client) Close() {
 	client.conn.Close()
+}
+
+func (client *Client) SubmitTransactions(txs types.Transactions) *proto.TransferTxResponse {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	msg := proto_node.ConstructTransactionListMessageAccount(txs)
+	request := &proto.TransferTxRequest{Transactions: msg}
+	response, err := client.clientServiceClient.SendTransferTx(ctx, request)
+	if err != nil {
+		log.Fatalf("fail to transfer tokens: %v", err)
+	}
+	return response
 }
 
 // GetBalance gets account balance from the client service.

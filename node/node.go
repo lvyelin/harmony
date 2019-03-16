@@ -33,6 +33,7 @@ import (
 	"github.com/harmony-one/harmony/internal/utils"
 	"github.com/harmony-one/harmony/node/worker"
 	"github.com/harmony-one/harmony/p2p"
+	p2p_host "github.com/harmony-one/harmony/p2p/host"
 )
 
 // State is a state of a node.
@@ -460,4 +461,11 @@ func (node *Node) AddBeaconChainDatabase(db ethdb.Database) {
 	}
 	node.beaconChain = chain
 	node.BeaconWorker = worker.New(params.TestChainConfig, chain, node.Consensus, pki.GetAddressFromPublicKey(node.SelfPeer.ConsensusPubKey), node.Consensus.ShardID)
+}
+
+// SendWalletTransactions will send transactions from wallet to consensus
+func (node *Node) SendWalletTransactions(msg []byte) error {
+	// TODO: here should send the transactions of node's own shardgroup
+	err := node.GetHost().SendMessageToGroups([]p2p.GroupID{p2p.GroupIDBeaconClient}, p2p_host.ConstructP2pMessage(byte(0), msg))
+	return err
 }

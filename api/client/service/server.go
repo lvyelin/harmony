@@ -16,6 +16,7 @@ type Server struct {
 	stateReader                       func() (*state.DB, error)
 	callFaucetContract                func(common.Address) common.Hash
 	getDeployedStakingContractAddress func() common.Address
+	sendTransactions                  func([]byte) error
 }
 
 // FetchAccountState implements the FetchAccountState interface to return account state.
@@ -53,6 +54,13 @@ func (s *Server) GetStakingContractInfo(ctx context.Context, request *proto.Stak
 	}, nil
 }
 
+func (s *Server) SendTransferTx(ctx context.Context, request *proto.TransferTxRequest) (*proto.TransferTxResponse, error) {
+	if err := s.sendTransactions(request.Transactions); err != nil {
+		return nil, err
+	}
+	return &proto.TransferTxResponse{Ok: true}, nil
+}
+
 // Start starts the Server on given ip and port.
 func (s *Server) Start(ip, port string) (*grpc.Server, error) {
 	// TODO(minhdoan): Currently not using ip. Fix it later.
@@ -72,7 +80,8 @@ func (s *Server) Start(ip, port string) (*grpc.Server, error) {
 func NewServer(
 	stateReader func() (*state.DB, error),
 	callFaucetContract func(common.Address) common.Hash,
-	getDeployedStakingContractAddress func() common.Address) *Server {
+	getDeployedStakingContractAddress func() common.Address,
+	sendTransactions func([]byte) error) *Server {
 	s := &Server{
 		stateReader:                       stateReader,
 		callFaucetContract:                callFaucetContract,

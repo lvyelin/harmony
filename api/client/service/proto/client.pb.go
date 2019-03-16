@@ -22,6 +22,86 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+// TransferTxRequest is the request to send token transfer transactions to server, then the server will broadcast the transactions
+type TransferTxRequest struct {
+	Transactions         []byte   `protobuf:"bytes,1,opt,name=transactions,proto3" json:"transactions,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *TransferTxRequest) Reset()         { *m = TransferTxRequest{} }
+func (m *TransferTxRequest) String() string { return proto.CompactTextString(m) }
+func (*TransferTxRequest) ProtoMessage()    {}
+func (*TransferTxRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_014de31d7ac8c57c, []int{0}
+}
+
+func (m *TransferTxRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TransferTxRequest.Unmarshal(m, b)
+}
+func (m *TransferTxRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TransferTxRequest.Marshal(b, m, deterministic)
+}
+func (m *TransferTxRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TransferTxRequest.Merge(m, src)
+}
+func (m *TransferTxRequest) XXX_Size() int {
+	return xxx_messageInfo_TransferTxRequest.Size(m)
+}
+func (m *TransferTxRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_TransferTxRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TransferTxRequest proto.InternalMessageInfo
+
+func (m *TransferTxRequest) GetTransactions() []byte {
+	if m != nil {
+		return m.Transactions
+	}
+	return nil
+}
+
+// TransferTxResponse is the response of TransferTxRequest
+type TransferTxResponse struct {
+	Ok                   bool     `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *TransferTxResponse) Reset()         { *m = TransferTxResponse{} }
+func (m *TransferTxResponse) String() string { return proto.CompactTextString(m) }
+func (*TransferTxResponse) ProtoMessage()    {}
+func (*TransferTxResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_014de31d7ac8c57c, []int{1}
+}
+
+func (m *TransferTxResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TransferTxResponse.Unmarshal(m, b)
+}
+func (m *TransferTxResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TransferTxResponse.Marshal(b, m, deterministic)
+}
+func (m *TransferTxResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TransferTxResponse.Merge(m, src)
+}
+func (m *TransferTxResponse) XXX_Size() int {
+	return xxx_messageInfo_TransferTxResponse.Size(m)
+}
+func (m *TransferTxResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_TransferTxResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TransferTxResponse proto.InternalMessageInfo
+
+func (m *TransferTxResponse) GetOk() bool {
+	if m != nil {
+		return m.Ok
+	}
+	return false
+}
+
 // FetchAccountStateRequest is the request to fetch an account's balance and nonce.
 type FetchAccountStateRequest struct {
 	// The account address
@@ -35,7 +115,7 @@ func (m *FetchAccountStateRequest) Reset()         { *m = FetchAccountStateReque
 func (m *FetchAccountStateRequest) String() string { return proto.CompactTextString(m) }
 func (*FetchAccountStateRequest) ProtoMessage()    {}
 func (*FetchAccountStateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_014de31d7ac8c57c, []int{0}
+	return fileDescriptor_014de31d7ac8c57c, []int{2}
 }
 
 func (m *FetchAccountStateRequest) XXX_Unmarshal(b []byte) error {
@@ -78,7 +158,7 @@ func (m *FetchAccountStateResponse) Reset()         { *m = FetchAccountStateResp
 func (m *FetchAccountStateResponse) String() string { return proto.CompactTextString(m) }
 func (*FetchAccountStateResponse) ProtoMessage()    {}
 func (*FetchAccountStateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_014de31d7ac8c57c, []int{1}
+	return fileDescriptor_014de31d7ac8c57c, []int{3}
 }
 
 func (m *FetchAccountStateResponse) XXX_Unmarshal(b []byte) error {
@@ -126,7 +206,7 @@ func (m *GetFreeTokenRequest) Reset()         { *m = GetFreeTokenRequest{} }
 func (m *GetFreeTokenRequest) String() string { return proto.CompactTextString(m) }
 func (*GetFreeTokenRequest) ProtoMessage()    {}
 func (*GetFreeTokenRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_014de31d7ac8c57c, []int{2}
+	return fileDescriptor_014de31d7ac8c57c, []int{4}
 }
 
 func (m *GetFreeTokenRequest) XXX_Unmarshal(b []byte) error {
@@ -167,7 +247,7 @@ func (m *GetFreeTokenResponse) Reset()         { *m = GetFreeTokenResponse{} }
 func (m *GetFreeTokenResponse) String() string { return proto.CompactTextString(m) }
 func (*GetFreeTokenResponse) ProtoMessage()    {}
 func (*GetFreeTokenResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_014de31d7ac8c57c, []int{3}
+	return fileDescriptor_014de31d7ac8c57c, []int{5}
 }
 
 func (m *GetFreeTokenResponse) XXX_Unmarshal(b []byte) error {
@@ -208,7 +288,7 @@ func (m *StakingContractInfoRequest) Reset()         { *m = StakingContractInfoR
 func (m *StakingContractInfoRequest) String() string { return proto.CompactTextString(m) }
 func (*StakingContractInfoRequest) ProtoMessage()    {}
 func (*StakingContractInfoRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_014de31d7ac8c57c, []int{4}
+	return fileDescriptor_014de31d7ac8c57c, []int{6}
 }
 
 func (m *StakingContractInfoRequest) XXX_Unmarshal(b []byte) error {
@@ -253,7 +333,7 @@ func (m *StakingContractInfoResponse) Reset()         { *m = StakingContractInfo
 func (m *StakingContractInfoResponse) String() string { return proto.CompactTextString(m) }
 func (*StakingContractInfoResponse) ProtoMessage()    {}
 func (*StakingContractInfoResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_014de31d7ac8c57c, []int{5}
+	return fileDescriptor_014de31d7ac8c57c, []int{7}
 }
 
 func (m *StakingContractInfoResponse) XXX_Unmarshal(b []byte) error {
@@ -296,6 +376,8 @@ func (m *StakingContractInfoResponse) GetNonce() uint64 {
 }
 
 func init() {
+	proto.RegisterType((*TransferTxRequest)(nil), "client.TransferTxRequest")
+	proto.RegisterType((*TransferTxResponse)(nil), "client.TransferTxResponse")
 	proto.RegisterType((*FetchAccountStateRequest)(nil), "client.FetchAccountStateRequest")
 	proto.RegisterType((*FetchAccountStateResponse)(nil), "client.FetchAccountStateResponse")
 	proto.RegisterType((*GetFreeTokenRequest)(nil), "client.GetFreeTokenRequest")
@@ -307,26 +389,30 @@ func init() {
 func init() { proto.RegisterFile("client.proto", fileDescriptor_014de31d7ac8c57c) }
 
 var fileDescriptor_014de31d7ac8c57c = []byte{
-	// 302 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x52, 0x41, 0x4f, 0xf2, 0x40,
-	0x14, 0xfc, 0xda, 0x0f, 0x31, 0xbe, 0xd4, 0xa8, 0x2b, 0x31, 0xb5, 0x78, 0xa8, 0xeb, 0x05, 0x3d,
-	0x60, 0xa2, 0xc6, 0x3b, 0x21, 0x81, 0x10, 0x6e, 0xad, 0x27, 0x2f, 0x66, 0xd9, 0x3e, 0xb5, 0x81,
-	0xec, 0x62, 0xfb, 0x30, 0xfc, 0x19, 0xff, 0xab, 0xa1, 0xdd, 0x35, 0x35, 0xb6, 0x70, 0xdb, 0x99,
-	0x7d, 0xf3, 0x26, 0x3b, 0xb3, 0xe0, 0xc9, 0x45, 0x8a, 0x8a, 0xfa, 0xcb, 0x4c, 0x93, 0x66, 0xed,
-	0x12, 0xf1, 0x07, 0xf0, 0x47, 0x48, 0xf2, 0x7d, 0x20, 0xa5, 0x5e, 0x29, 0x8a, 0x49, 0x10, 0x46,
-	0xf8, 0xb1, 0xc2, 0x9c, 0x98, 0x0f, 0xfb, 0x22, 0x49, 0x32, 0xcc, 0x73, 0xdf, 0x09, 0x9d, 0x9e,
-	0x17, 0x59, 0xc8, 0xa7, 0x70, 0x5e, 0xa3, 0xca, 0x97, 0x5a, 0xe5, 0xb8, 0x91, 0xcd, 0xc4, 0x42,
-	0x28, 0x89, 0x56, 0x66, 0x20, 0xeb, 0xc0, 0x9e, 0xd2, 0x1b, 0xde, 0x0d, 0x9d, 0x5e, 0x2b, 0x2a,
-	0x01, 0xbf, 0x85, 0xd3, 0x31, 0xd2, 0x28, 0x43, 0x7c, 0xd2, 0x73, 0x54, 0xbb, 0xdd, 0x6f, 0xa0,
-	0xf3, 0x5b, 0x60, 0x8c, 0x19, 0xb4, 0x68, 0x3d, 0x49, 0xcc, 0x78, 0x71, 0xe6, 0x8f, 0x10, 0xc4,
-	0x24, 0xe6, 0xa9, 0x7a, 0x1b, 0x6a, 0x45, 0x99, 0x90, 0x34, 0x51, 0xaf, 0x7a, 0xb7, 0xc7, 0x1a,
-	0xba, 0xb5, 0x3a, 0x63, 0x75, 0x0d, 0xc7, 0xd2, 0xf0, 0x2f, 0xd5, 0x0d, 0x07, 0xd1, 0x91, 0xe5,
-	0x07, 0x25, 0x5d, 0x8d, 0xc3, 0x6d, 0x88, 0xe3, 0x7f, 0x25, 0x8e, 0xbb, 0x2f, 0x17, 0x0e, 0x87,
-	0x45, 0x39, 0x31, 0x66, 0x9f, 0xa9, 0x44, 0xf6, 0x0c, 0x27, 0x7f, 0xd2, 0x66, 0x61, 0xdf, 0xf4,
-	0xd9, 0x54, 0x5f, 0x70, 0xb9, 0x65, 0xa2, 0x7c, 0x06, 0xff, 0xc7, 0xa6, 0xe0, 0x55, 0xb3, 0x64,
-	0x5d, 0x2b, 0xaa, 0xa9, 0x24, 0xb8, 0xa8, 0xbf, 0xfc, 0x59, 0x26, 0xe1, 0x6c, 0x8c, 0x54, 0x93,
-	0x1b, 0xe3, 0x56, 0xd9, 0x5c, 0x46, 0x70, 0xb5, 0x75, 0xc6, 0x9a, 0xcc, 0xda, 0xc5, 0x07, 0xbe,
-	0xff, 0x0e, 0x00, 0x00, 0xff, 0xff, 0xe9, 0x3e, 0x0b, 0x3e, 0xd0, 0x02, 0x00, 0x00,
+	// 367 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x93, 0x41, 0x6f, 0xda, 0x40,
+	0x10, 0x85, 0x8b, 0x4b, 0xa1, 0x1d, 0xb9, 0xb4, 0x6c, 0x51, 0x65, 0x4c, 0x0f, 0x74, 0xdb, 0x03,
+	0xc9, 0x81, 0x48, 0x49, 0x94, 0x9c, 0x11, 0x12, 0x08, 0x71, 0xb3, 0x39, 0xe5, 0x12, 0x2d, 0xeb,
+	0x21, 0xb1, 0x8c, 0x76, 0x89, 0x3d, 0x44, 0xfc, 0xe4, 0xfc, 0x8c, 0x08, 0xdb, 0x4b, 0x8c, 0x30,
+	0x70, 0xf3, 0xbc, 0x9d, 0x37, 0x9f, 0xfc, 0x66, 0x17, 0x6c, 0xb9, 0x0c, 0x51, 0x51, 0x7f, 0x15,
+	0x6b, 0xd2, 0xac, 0x96, 0x55, 0xfc, 0x1e, 0x9a, 0xb3, 0x58, 0xa8, 0x64, 0x81, 0xf1, 0x6c, 0xe3,
+	0xe1, 0xcb, 0x1a, 0x13, 0x62, 0x1c, 0x6c, 0xda, 0x8a, 0x42, 0x52, 0xa8, 0x55, 0xe2, 0x54, 0xba,
+	0x95, 0x9e, 0xed, 0xed, 0x69, 0xfc, 0x3f, 0xb0, 0xa2, 0x31, 0x59, 0x69, 0x95, 0x20, 0x6b, 0x80,
+	0xa5, 0xa3, 0xb4, 0xff, 0xab, 0x67, 0xe9, 0x88, 0xdf, 0x82, 0x33, 0x42, 0x92, 0xcf, 0x03, 0x29,
+	0xf5, 0x5a, 0x91, 0x4f, 0x82, 0xd0, 0x50, 0x1c, 0xa8, 0x8b, 0x20, 0x88, 0x31, 0x31, 0x00, 0x53,
+	0xf2, 0x29, 0xb4, 0x4b, 0x5c, 0x39, 0xc2, 0x81, 0xfa, 0x5c, 0x2c, 0x85, 0x92, 0x68, 0x6c, 0x79,
+	0xc9, 0x5a, 0xf0, 0x45, 0xe9, 0xad, 0x6e, 0x75, 0x2b, 0xbd, 0xaa, 0x97, 0x15, 0xfc, 0x0a, 0x7e,
+	0x8d, 0x91, 0x46, 0x31, 0xe2, 0x4c, 0x47, 0xa8, 0xce, 0xd3, 0x2f, 0xa1, 0xb5, 0x6f, 0xc8, 0xc1,
+	0x0c, 0xaa, 0xb4, 0x99, 0x04, 0x79, 0x7b, 0xfa, 0xcd, 0xef, 0xc0, 0xf5, 0x49, 0x44, 0xa1, 0x7a,
+	0x1a, 0x6a, 0x45, 0xb1, 0x90, 0x34, 0x51, 0x0b, 0x7d, 0x9e, 0xb1, 0x81, 0x4e, 0xa9, 0x2f, 0x47,
+	0x5d, 0xc0, 0x4f, 0x99, 0xeb, 0x8f, 0xc5, 0x09, 0xdf, 0xbc, 0x1f, 0x46, 0x1f, 0x64, 0x72, 0x31,
+	0x0e, 0xeb, 0x48, 0x1c, 0x9f, 0x0b, 0x71, 0x5c, 0xbf, 0x59, 0xf0, 0x7d, 0x98, 0xee, 0xde, 0xc7,
+	0xf8, 0x35, 0x94, 0xc8, 0x1e, 0xa0, 0x79, 0x90, 0x36, 0xeb, 0xf6, 0xf3, 0xeb, 0x72, 0x6c, 0x7d,
+	0xee, 0xdf, 0x13, 0x1d, 0xd9, 0x6f, 0xf0, 0x4f, 0x6c, 0x0a, 0x76, 0x31, 0x4b, 0xd6, 0x31, 0xa6,
+	0x92, 0x95, 0xb8, 0x7f, 0xca, 0x0f, 0x77, 0xc3, 0x24, 0xfc, 0x1e, 0x23, 0x95, 0xe4, 0xc6, 0xb8,
+	0x71, 0x1e, 0x5f, 0x86, 0xfb, 0xef, 0x64, 0xcf, 0x0e, 0x32, 0x81, 0x86, 0x8f, 0x2a, 0xf8, 0xb8,
+	0xdb, 0xac, 0x6d, 0x8c, 0x07, 0x0f, 0xc5, 0x75, 0xcb, 0x8e, 0xcc, 0xa8, 0x79, 0x2d, 0x7d, 0x6a,
+	0x37, 0xef, 0x01, 0x00, 0x00, 0xff, 0xff, 0xc3, 0xe9, 0xe5, 0xe6, 0x7a, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -344,6 +430,7 @@ type ClientServiceClient interface {
 	FetchAccountState(ctx context.Context, in *FetchAccountStateRequest, opts ...grpc.CallOption) (*FetchAccountStateResponse, error)
 	GetFreeToken(ctx context.Context, in *GetFreeTokenRequest, opts ...grpc.CallOption) (*GetFreeTokenResponse, error)
 	GetStakingContractInfo(ctx context.Context, in *StakingContractInfoRequest, opts ...grpc.CallOption) (*StakingContractInfoResponse, error)
+	SendTransferTx(ctx context.Context, in *TransferTxRequest, opts ...grpc.CallOption) (*TransferTxResponse, error)
 }
 
 type clientServiceClient struct {
@@ -381,11 +468,21 @@ func (c *clientServiceClient) GetStakingContractInfo(ctx context.Context, in *St
 	return out, nil
 }
 
+func (c *clientServiceClient) SendTransferTx(ctx context.Context, in *TransferTxRequest, opts ...grpc.CallOption) (*TransferTxResponse, error) {
+	out := new(TransferTxResponse)
+	err := c.cc.Invoke(ctx, "/client.ClientService/SendTransferTx", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ClientServiceServer is the server API for ClientService service.
 type ClientServiceServer interface {
 	FetchAccountState(context.Context, *FetchAccountStateRequest) (*FetchAccountStateResponse, error)
 	GetFreeToken(context.Context, *GetFreeTokenRequest) (*GetFreeTokenResponse, error)
 	GetStakingContractInfo(context.Context, *StakingContractInfoRequest) (*StakingContractInfoResponse, error)
+	SendTransferTx(context.Context, *TransferTxRequest) (*TransferTxResponse, error)
 }
 
 func RegisterClientServiceServer(s *grpc.Server, srv ClientServiceServer) {
@@ -446,6 +543,24 @@ func _ClientService_GetStakingContractInfo_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ClientService_SendTransferTx_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransferTxRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClientServiceServer).SendTransferTx(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/client.ClientService/SendTransferTx",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClientServiceServer).SendTransferTx(ctx, req.(*TransferTxRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _ClientService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "client.ClientService",
 	HandlerType: (*ClientServiceServer)(nil),
@@ -461,6 +576,10 @@ var _ClientService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStakingContractInfo",
 			Handler:    _ClientService_GetStakingContractInfo_Handler,
+		},
+		{
+			MethodName: "SendTransferTx",
+			Handler:    _ClientService_SendTransferTx_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
