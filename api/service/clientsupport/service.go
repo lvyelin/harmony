@@ -28,10 +28,11 @@ type Service struct {
 func New(stateReader func() (*state.DB, error),
 	callFaucetContract func(common.Address) common.Hash,
 	getDeployedStakingContract func() common.Address,
+	sendTransactions func([]byte) error,
 	ip, nodePort string) *Service {
 	port, _ := strconv.Atoi(nodePort)
 	return &Service{
-		server: clientService.NewServer(stateReader, callFaucetContract, getDeployedStakingContract),
+		server: clientService.NewServer(stateReader, callFaucetContract, getDeployedStakingContract, sendTransactions),
 		ip:     ip,
 		port:   strconv.Itoa(port + ClientServicePortDiff)}
 }

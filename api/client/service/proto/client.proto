@@ -7,6 +7,17 @@ service ClientService {
   rpc FetchAccountState(FetchAccountStateRequest) returns (FetchAccountStateResponse) {}
   rpc GetFreeToken(GetFreeTokenRequest) returns (GetFreeTokenResponse) {}
   rpc GetStakingContractInfo(StakingContractInfoRequest) returns (StakingContractInfoResponse) {}
+  rpc SendTransferTx(TransferTxRequest) returns (TransferTxResponse) {}
+}
+
+// TransferTxRequest is the request to send token transfer transactions to server, then the server will broadcast the transactions
+message TransferTxRequest {
+    bytes transactions = 1;
+}
+
+// TransferTxResponse is the response of TransferTxRequest 
+message TransferTxResponse {
+    bool ok = 1;
 }
 
 // FetchAccountStateRequest is the request to fetch an account's balance and nonce.

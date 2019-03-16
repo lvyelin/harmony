@@ -18,10 +18,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
-	clientService "github.com/harmony-one/harmony/api/client/service"
 	"github.com/harmony-one/harmony/core/types"
 	"github.com/harmony-one/harmony/internal/wallet/wallet"
-	"github.com/harmony-one/harmony/node"
 )
 
 var (
@@ -29,17 +27,14 @@ var (
 	builtBy string
 	builtAt string
 	commit  string
+
+	// TODO: support multiple shards
+	shardIDs = []uint32{0}
 )
 
 func printVersion(me string) {
 	fmt.Fprintf(os.Stderr, "Harmony (C) 2018. %v, version %v-%v (%v %v)\n", path.Base(me), version, commit, builtBy, builtAt)
 	os.Exit(0)
-}
-
-// AccountState includes the balance and nonce of an account
-type AccountState struct {
-	balance *big.Int
-	nonce   uint64
 }
 
 var (
@@ -172,35 +167,36 @@ func processImportCommnad() {
 
 func processBalancesCommand() {
 	balanceCommand.Parse(os.Args[2:])
-	walletNode := wallet.CreateWalletNode()
+	wallet := wallet.New()
 
 	if *balanceAddressPtr == "" {
 		for i, address := range ReadAddresses() {
 			fmt.Printf("Account %d: %s:\n", i, address.Hex())
-			for shardID, balanceNonce := range FetchBalance(address, walletNode) {
-				fmt.Printf("    Balance in Shard %d:  %s \n", shardID, convertBalanceIntoReadableFormat(balanceNonce.balance))
+			for shardID, balanceNonce := range wallet.FetchBalance(address, shardIDs) {
+				fmt.Printf("    Balance in Shard %d:  %s \n", shardID, convertBalanceIntoReadableFormat(balanceNonce.Balance))
 			}
 		}
 	} else {
 		address := common.HexToAddress(*balanceAddressPtr)
 		fmt.Printf("Account: %s:\n", address.Hex())
-		for shardID, balanceNonce := range FetchBalance(address, walletNode) {
-			fmt.Printf("    Balance in Shard %d:  %s \n", shardID, convertBalanceIntoReadableFormat(balanceNonce.balance))
+		for shardID, balanceNonce := range wallet.FetchBalance(address, shardIDs) {
+			fmt.Printf("Balance in Shard %d:  %s \n", shardID, convertBalanceIntoReadableFormat(balanceNonce.Balance))
 		}
 	}
 }
 
 func processGetFreeToken() {
 	freeTokenCommand.Parse(os.Args[2:])
-	walletNode := wallet.CreateWalletNode()
+	wallet := wallet.New()
 
 	if *freeTokenAddressPtr == "" {
 		fmt.Println("Error: --address is required")
 		return
 	}
 	address := common.HexToAddress(*freeTokenAddressPtr)
-
-	GetFreeToken(address, walletNode)
+	for _, shardID := range shardIDs {
+		wallet.GetFreeToken(address, shardID)
+	}
 }
 
 func processTransferCommand() {
@@ -256,15 +252,15 @@ func processTransferCommand() {
 	// Generate transaction
 	senderPriKey := priKeys[senderIndex]
 	senderAddress := addresses[senderIndex]
-	walletNode := wallet.CreateWalletNode()
-	shardIDToAccountState := FetchBalance(senderAddress, walletNode)
+	wallet := wallet.New()
+	shardIDToAccountState := wallet.FetchBalance(senderAddress, []uint32{uint32(shardID)})
 
 	state, ok := shardIDToAccountState[uint32(shardID)]
 	if !ok {
 		fmt.Printf("Failed connecting to the shard %d\n", shardID)
 		return
 	}
-	balance := state.balance
+	balance := state.Balance
 	balance = balance.Div(balance, big.NewInt(params.GWei))
 	if amount > float64(balance.Uint64())/params.GWei {
 		fmt.Printf("Balance is not enough for the transfer, current balance is %.6f\n", float64(balance.Uint64())/params.GWei)
@@ -273,8 +269,8 @@ func processTransferCommand() {
 
 	amountBigInt := big.NewInt(int64(amount * params.GWei))
 	amountBigInt = amountBigInt.Mul(amountBigInt, big.NewInt(params.GWei))
-	tx, _ := types.SignTx(types.NewTransaction(state.nonce, receiverAddress, uint32(shardID), amountBigInt, params.TxGas, nil, nil), types.HomesteadSigner{}, senderPriKey)
-	wallet.SubmitTransaction(tx, walletNode, uint32(shardID))
+	tx, _ := types.SignTx(types.NewTransaction(state.Nonce, receiverAddress, uint32(shardID), amountBigInt, params.TxGas, nil, []byte{}), types.HomesteadSigner{}, senderPriKey)
+	wallet.SubmitTransactions(types.Transactions{tx}, uint32(shardID))
 }
 
 func convertBalanceIntoReadableFormat(balance *big.Int) string {
@@ -315,42 +311,6 @@ func convertBalanceIntoReadableFormat(balance *big.Int) string {
 		}
 	}
 	return string(bytes)
-}
-
-// FetchBalance fetches account balance of specified address from the Harmony network
-// TODO add support for non beacon chain shards
-func FetchBalance(address common.Address, walletNode *node.Node) map[uint32]AccountState {
-	result := make(map[uint32]AccountState)
-	peers := wallet.GetPeersFromBeaconChain(walletNode)
-	if len(peers) == 0 {
-		fmt.Printf("[FATAL] Can't find peers\n")
-		return nil
-	}
-	peer := peers[0]
-	port, _ := strconv.Atoi(peer.Port)
-	client := clientService.NewClient(peer.IP, strconv.Itoa(port+node.ClientServicePortDiff))
-	response := client.GetBalance(address)
-	balance := big.NewInt(0)
-	balance.SetBytes(response.Balance)
-	result[0] = AccountState{balance, response.Nonce}
-	return result
-}
-
-// GetFreeToken requests for token test token on each shard
-func GetFreeToken(address common.Address, walletNode *node.Node) {
-	peers := wallet.GetPeersFromBeaconChain(walletNode)
-	if len(peers) == 0 {
-		fmt.Printf("[FATAL] Can't find peers\n")
-		return
-	}
-	peer := peers[0]
-	port, _ := strconv.Atoi(peer.Port)
-	client := clientService.NewClient(peer.IP, strconv.Itoa(port+node.ClientServicePortDiff))
-	response := client.GetFreeToken(address)
-
-	txID := common.Hash{}
-	txID.SetBytes(response.TxId)
-	fmt.Printf("Transaction Id requesting free token in shard %d: %s\n", int(0), txID.Hex())
 }
 
 // ReadAddresses reads the addresses stored in local keystore

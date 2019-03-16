@@ -2,69 +2,93 @@ package wallet
 
 import (
 	"fmt"
-	"time"
+	"math/big"
+	"math/rand"
+	"strconv"
 
-	"github.com/harmony-one/harmony/api/client"
-	proto_node "github.com/harmony-one/harmony/api/proto/node"
+	"github.com/ethereum/go-ethereum/common"
+	clientService "github.com/harmony-one/harmony/api/client/service"
 	"github.com/harmony-one/harmony/core/types"
-	nodeconfig "github.com/harmony-one/harmony/internal/configs/node"
-	"github.com/harmony-one/harmony/internal/utils"
 	"github.com/harmony-one/harmony/node"
 	"github.com/harmony-one/harmony/p2p"
-	p2p_host "github.com/harmony-one/harmony/p2p/host"
-	"github.com/harmony-one/harmony/p2p/p2pimpl"
-	ma "github.com/multiformats/go-multiaddr"
 )
 
-// CreateWalletNode creates wallet server node.
-func CreateWalletNode() *node.Node {
-	utils.BootNodes = getBootNodes()
-	shardIDs := []uint32{0}
+// we will hard coded several rpc servers (archival nodes) for wallet
+var (
+	p1 = p2p.Peer{IP: "127.0.0.1", Port: "9001"}
+	p2 = p2p.Peer{IP: "127.0.0.1", Port: "9002"}
+)
 
-	// dummy host for wallet
-	self := p2p.Peer{IP: "127.0.0.1", Port: "6999"}
-	priKey, _, _ := utils.GenKeyP2P("127.0.0.1", "6999")
-	host, err := p2pimpl.NewHost(&self, priKey)
-	if err != nil {
-		panic(err)
-	}
-	walletNode := node.New(host, nil, nil)
-	walletNode.Client = client.NewClient(walletNode.GetHost(), shardIDs)
-
-	walletNode.NodeConfig.SetRole(nodeconfig.ClientNode)
-	walletNode.ServiceManagerSetup()
-	walletNode.RunServices()
-	return walletNode
+// AccountState includes the balance and nonce of an account
+type AccountState struct {
+	Balance *big.Int
+	Nonce   uint64
 }
 
-// GetPeersFromBeaconChain get peers from beacon chain
-// TODO: add support for normal shards
-func GetPeersFromBeaconChain(walletNode *node.Node) []p2p.Peer {
-	peers := []p2p.Peer{}
+type Wallet struct {
+	selfPeer p2p.Peer
+	peers    map[uint32][]p2p.Peer // we don't use p2p, use grpc instead
+	shardIds []uint32
+}
 
-	time.Sleep(4 * time.Second)
-	walletNode.BeaconNeighbors.Range(func(k, v interface{}) bool {
-		peers = append(peers, v.(p2p.Peer))
-		return true
-	})
-	utils.GetLogInstance().Debug("GetPeersFromBeaconChain", "peers:", peers)
+// CreateWalletNode creates wallet server node.
+// Peer information is hard coded
+func New() *Wallet {
+	// dummy host for wallet
+	self := p2p.Peer{IP: "127.0.0.1", Port: "6999"}
+	wallet := &Wallet{selfPeer: self, peers: createAllPeers()}
+	return wallet
+}
+
+// createAllPeers get peers from given shard
+// TODO (chao): only support beacon shard now; add support for normal shards
+func createAllPeers() map[uint32][]p2p.Peer {
+	peers := make(map[uint32][]p2p.Peer)
+	peers[0] = []p2p.Peer{p1, p2}
 	return peers
 }
 
-// SubmitTransaction submits the transaction to the Harmony network
-func SubmitTransaction(tx *types.Transaction, walletNode *node.Node, shardID uint32) error {
-	msg := proto_node.ConstructTransactionListMessageAccount(types.Transactions{tx})
-	walletNode.GetHost().SendMessageToGroups([]p2p.GroupID{p2p.GroupIDBeaconClient}, p2p_host.ConstructP2pMessage(byte(0), msg))
-	fmt.Printf("Transaction Id for shard %d: %s\n", int(shardID), tx.Hash().Hex())
-	return nil
+// GetPeersFromShardID gets all the peers for a given ShardID
+func (wallet *Wallet) GetPeersFromShardID(shardID uint32) []p2p.Peer {
+	return wallet.peers[shardID]
 }
 
-func getBootNodes() []ma.Multiaddr {
-	//addrStrings := []string{"/ip4/54.213.43.194/tcp/9874/p2p/QmQhPRqqfTRExqWmTifjMaBvRd3HBmnmj9jYAvTy6HPPJj"}
-	addrStrings := []string{"/ip4/100.26.90.187/tcp/9871/p2p/QmPH2XsLP88jpfejHycQRWB7vDjwDju9qT9rMmdNaNea5v", "/ip4/54.213.43.194/tcp/9871/p2p/QmQLjTciaJppXVPZFoj4gTdME5axzTxtVwty5Lg8kwt6Zs"}
-	bootNodeAddrs, err := utils.StringsToAddrs(addrStrings)
-	if err != nil {
-		panic(err)
+// pickRandomPeer will pick a random peer from a given shardID
+func (wallet *Wallet) pickRandomPeer(shardID uint32) p2p.Peer {
+	idx := rand.Intn(len(wallet.peers[shardID]))
+	return wallet.peers[shardID][idx]
+}
+
+// FetchBalance fetches account balance of specified address from the Harmony network
+func (wallet *Wallet) FetchBalance(address common.Address, shardIDs []uint32) map[uint32]AccountState {
+	result := make(map[uint32]AccountState)
+	for _, shardID := range shardIDs {
+		peer := wallet.pickRandomPeer(shardID)
+		port, _ := strconv.Atoi(peer.Port)
+		client := clientService.NewClient(peer.IP, strconv.Itoa(port+node.ClientServicePortDiff))
+		response := client.GetBalance(address)
+		balance := big.NewInt(0)
+		balance.SetBytes(response.Balance)
+		result[shardID] = AccountState{balance, response.Nonce}
 	}
-	return bootNodeAddrs
+	return result
+}
+
+// GetFreeToken requests for token test token on each shard
+func (wallet *Wallet) GetFreeToken(address common.Address, shardID uint32) {
+	peer := wallet.pickRandomPeer(shardID)
+	port, _ := strconv.Atoi(peer.Port)
+	client := clientService.NewClient(peer.IP, strconv.Itoa(port+node.ClientServicePortDiff))
+	response := client.GetFreeToken(address)
+
+	txID := common.Hash{}
+	txID.SetBytes(response.TxId)
+	fmt.Printf("Transaction Id requesting free token in shard %d: %s\n", int(0), txID.Hex())
+}
+
+func (wallet *Wallet) SubmitTransactions(txs []*types.Transaction, shardID uint32) {
+	peer := wallet.pickRandomPeer(shardID)
+	port, _ := strconv.Atoi(peer.Port)
+	client := clientService.NewClient(peer.IP, strconv.Itoa(port+node.ClientServicePortDiff))
+	client.SubmitTransactions(txs)
 }
