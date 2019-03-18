@@ -15,8 +15,9 @@ import (
 
 // we will hard coded several rpc servers (archival nodes) for wallet
 var (
-	p1 = p2p.Peer{IP: "127.0.0.1", Port: "9001"}
-	p2 = p2p.Peer{IP: "127.0.0.1", Port: "9002"}
+	p1 = p2p.Peer{IP: "52.25.110.50", Port: "9000"}
+	p2 = p2p.Peer{IP: "34.214.155.135", Port: "9000"}
+	p3 = p2p.Peer{IP: "18.237.226.204", Port: "9000"}
 )
 
 // AccountState includes the balance and nonce of an account
@@ -44,7 +45,7 @@ func New() *Wallet {
 // TODO (chao): only support beacon shard now; add support for normal shards
 func createAllPeers() map[uint32][]p2p.Peer {
 	peers := make(map[uint32][]p2p.Peer)
-	peers[0] = []p2p.Peer{p1, p2}
+	peers[0] = []p2p.Peer{p1, p2, p3}
 	return peers
 }
 
