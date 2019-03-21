@@ -12,6 +12,7 @@ import (
 	"math/big"
 	"os"
 	"path"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -20,10 +21,15 @@ import (
 
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/harmony-one/harmony/api/client"
 	clientService "github.com/harmony-one/harmony/api/client/service"
 	"github.com/harmony-one/harmony/core/types"
+	nodeconfig "github.com/harmony-one/harmony/internal/configs/node"
+	"github.com/harmony-one/harmony/internal/utils"
 	"github.com/harmony-one/harmony/internal/wallet/wallet"
 	"github.com/harmony-one/harmony/node"
+	"github.com/harmony-one/harmony/p2p"
+	"github.com/harmony-one/harmony/p2p/p2pimpl"
 )
 
 var (
@@ -31,6 +37,10 @@ var (
 	builtBy string
 	builtAt string
 	commit  string
+)
+
+var (
+	walletNode *node.Node
 )
 
 func printVersion(me string) {
@@ -112,20 +122,51 @@ func main() {
 		setupLog()
 		os.Args = os.Args[:len(os.Args)-1]
 	}
-
 	// Switch on the subcommand
 	switch os.Args[1] {
 	case "-version":
 		printVersion(os.Args[0])
 	case "new":
-		go processNewCommnad()
+		processNewCommnad()
 	case "list":
-		go processListCommand()
+		processListCommand()
 	case "removeAll":
-		go clearKeystore()
-		fmt.Println("All existing accounts deleted...")
+		clearKeystore()
 	case "import":
-		go processImportCommnad()
+		processImportCommnad()
+	}
+
+	// Add GOMAXPROCS to achieve max performance.
+	runtime.GOMAXPROCS(1024)
+
+	if len(utils.BootNodes) == 0 {
+		addrStrings := []string{"/ip4/100.26.90.187/tcp/9876/p2p/QmZJJx6AdaoEkGLrYG4JeLCKeCKDjnFz2wfHNHxAqFSGA9", "/ip4/54.213.43.194/tcp/9876/p2p/QmQayinFSgMMw5cSpDUiD9pQ2WeP6WNmGxpZ6ou3mdVFJX"}
+		bootNodeAddrs, err := utils.StringsToAddrs(addrStrings)
+		if err != nil {
+			panic(err)
+		}
+		utils.BootNodes = bootNodeAddrs
+	}
+
+	shardIDs := []uint32{0}
+
+	// dummy host for wallet
+	self := p2p.Peer{IP: "127.0.0.1", Port: "6999"}
+	priKey, _, _ := utils.GenKeyP2P("127.0.0.1", "6999")
+	host, err := p2pimpl.NewHost(&self, priKey)
+	if err != nil {
+		panic(err)
+	}
+
+	walletNode = node.New(host, nil, nil)
+	walletNode.Client = client.NewClient(walletNode.GetHost(), shardIDs)
+
+	walletNode.NodeConfig.SetRole(nodeconfig.ClientNode)
+	walletNode.ServiceManagerSetup()
+	walletNode.RunServices()
+
+	// Switch on the subcommand
+	switch os.Args[1] {
 	case "balances":
 		go processBalancesCommand()
 	case "getFreeToken":
@@ -156,8 +197,7 @@ func processNewCommnad() {
 
 	if err != nil {
 		fmt.Println("Failed to get randomness for the private key...")
-		async = false
-		return
+		os.Exit(1)
 	}
 	priKey, err := crypto2.GenerateKey()
 	if err != nil {
@@ -166,7 +206,7 @@ func processNewCommnad() {
 	storePrivateKey(crypto2.FromECDSA(priKey))
 	fmt.Printf("New account created with address:{%s}\n", crypto2.PubkeyToAddress(priKey.PublicKey).Hex())
 	fmt.Printf("Please keep a copy of the private key:{%s}\n", hex.EncodeToString(crypto2.FromECDSA(priKey)))
-	async = false
+	os.Exit(0)
 }
 
 func processListCommand() {
@@ -174,7 +214,7 @@ func processListCommand() {
 		fmt.Printf("Account %d:{%s}\n", i, crypto2.PubkeyToAddress(key.PublicKey).Hex())
 		fmt.Printf("    PrivateKey:{%s}\n", hex.EncodeToString(key.D.Bytes()))
 	}
-	async = false
+	os.Exit(0)
 }
 
 func processImportCommnad() {
@@ -182,8 +222,7 @@ func processImportCommnad() {
 	priKey := *accountImportPtr
 	if priKey == "" {
 		fmt.Println("Error: --privateKey is required")
-		async = false
-		return
+		os.Exit(1)
 	}
 	if !accountImportCommand.Parsed() {
 		fmt.Println("Failed to parse flags")
@@ -194,12 +233,12 @@ func processImportCommnad() {
 	}
 	storePrivateKey(priKeyBytes)
 	fmt.Println("Private key imported...")
-	async = false
+	os.Exit(0)
 }
 
 func processBalancesCommand() {
 	balanceCommand.Parse(os.Args[2:])
-	walletNode := wallet.CreateWalletNode()
+	time.Sleep(10 * time.Second)
 
 	if *balanceAddressPtr == "" {
 		for i, address := range ReadAddresses() {
@@ -215,7 +254,7 @@ func processBalancesCommand() {
 			fmt.Printf("    Balance in Shard %d:  %s, nonce: %v \n", shardID, convertBalanceIntoReadableFormat(balanceNonce.balance), balanceNonce.nonce)
 		}
 	}
-	async = false
+	//	async = false
 }
 
 func processGetFreeToken() {
@@ -439,6 +478,8 @@ func storePrivateKey(priKey []byte) {
 // clearKeystore deletes all data in the local keystore
 func clearKeystore() {
 	ioutil.WriteFile("keystore", []byte{}, 0644)
+	fmt.Println("All existing accounts deleted...")
+	os.Exit(0)
 }
 
 // readPrivateKeys reads all the private key stored in local keystore

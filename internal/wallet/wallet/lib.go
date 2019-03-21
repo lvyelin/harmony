@@ -33,10 +33,10 @@ func CreateWalletNode() *node.Node {
 
 	walletNode.NodeConfig.SetRole(nodeconfig.ClientNode)
 	walletNode.ServiceManagerSetup()
-	walletNode.RunServices()
+	go walletNode.RunServices()
 	// wait for networkinfo/discovery service to start fully
 	// FIXME (leo): use async mode or channel to communicate
-	time.Sleep(2 * time.Second)
+	time.Sleep(10 * time.Second)
 	return walletNode
 }
 
@@ -47,7 +47,7 @@ func GetPeersFromBeaconChain(walletNode *node.Node) []p2p.Peer {
 
 	// wait until we got beacon peer
 	// FIXME (chao): use async channel for communiation
-	time.Sleep(4 * time.Second)
+	time.Sleep(10 * time.Second)
 	walletNode.BeaconNeighbors.Range(func(k, v interface{}) bool {
 		peers = append(peers, v.(p2p.Peer))
 		return true
