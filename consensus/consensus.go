@@ -113,6 +113,10 @@ type Consensus struct {
 
 	// List of offline Peers
 	OfflinePeerList []p2p.Peer
+
+	// Indicate New Peers added to Consensus
+	// The new peers need to be verified with staking
+	NewPeerAdded bool
 }
 
 // BFTBlockInfo send the latest block that was in BFT consensus process as well as its consensusID to state syncing
@@ -231,6 +235,8 @@ func New(host p2p.Host, ShardID uint32, peers []p2p.Peer, leader p2p.Peer, blsPr
 
 	consensus.uniqueIDInstance = utils.GetUniqueValidatorIDInstance()
 	consensus.OfflinePeerList = make([]p2p.Peer, 0)
+
+	consensus.NewPeerAdded = false
 
 	//	consensus.Log.Info("New Consensus", "IP", ip, "Port", port, "NodeID", consensus.nodeID, "priKey", consensus.priKey, "PubKey", consensus.PubKey)
 	return &consensus
@@ -404,13 +410,13 @@ func (consensus *Consensus) AddPeers(peers []*p2p.Peer) int {
 	count := 0
 
 	for _, peer := range peers {
-		_, ok := consensus.validators.Load(peer.GetAddressHex())
+		_, ok := consensus.validators.LoadOrStore(peer.GetAddressHex(), *peer)
 		if !ok {
-			consensus.validators.Store(peer.GetAddressHex(), *peer)
 			consensus.pubKeyLock.Lock()
 			consensus.PublicKeys = append(consensus.PublicKeys, peer.ConsensusPubKey)
+			consensus.NewPeerAdded = true
 			consensus.pubKeyLock.Unlock()
-			//			utils.GetLogInstance().Debug("[SYNC]", "new peer added", peer)
+			utils.GetLogInstance().Debug("Consensus:", "AddPeers", peer)
 		}
 		count++
 	}

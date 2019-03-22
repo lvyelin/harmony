@@ -385,10 +385,7 @@ func (node *Node) pingMessageHandler(msgPayload []byte, sender string) int {
 	if ping.Node.Role == proto_node.ClientRole {
 		utils.GetLogInstance().Info("Add Client Peer to Node", "Address", node.Consensus.GetSelfAddress(), "Client", peer)
 		node.ClientPeer = peer
-		return 0
-	}
-
-	if node.NodeConfig.IsLeader() {
+	} else {
 		utils.GetLogInstance().Info("Add Peer to Node", "Address", node.Consensus.GetSelfAddress(), "Pear", peer)
 		node.AddPeers([]*p2p.Peer{peer})
 	}
@@ -416,7 +413,7 @@ func (node *Node) SendPongMessage() {
 				continue
 			}
 			// new peers added
-			if numPubKeysNow != numPubKeys || numPeersNow != numPeers {
+			if node.Consensus.NewPeerAdded || numPubKeysNow != numPubKeys || numPeersNow != numPeers {
 				sentMessage = false
 			} else {
 				// stable number of peers/pubkeys, sent the pong message
@@ -432,6 +429,7 @@ func (node *Node) SendPongMessage() {
 						utils.GetLogInstance().Info("[PONG] sent pong message to", "group", node.NodeConfig.GetShardGroupID(), "# nodes", numPeersNow)
 					}
 					sentMessage = true
+					node.Consensus.NewPeerAdded = false
 					// stop sending ping message
 					node.serviceManager.TakeAction(&service.Action{Action: service.Stop, ServiceType: service.PeerDiscovery})
 					// wait a bit until all validators received pong message
