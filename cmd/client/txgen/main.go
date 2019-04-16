@@ -77,6 +77,8 @@ func main() {
 	}
 
 	var shardIDs []uint32
+	shardGroups := make([]p2p.GroupID, 0)
+
 	nodePriKey, _, err := utils.LoadKeyFromFile(*keyFile)
 	if err != nil {
 		panic(err)
@@ -92,6 +94,9 @@ func main() {
 	// Init with LibP2P enabled, FIXME: (leochen) right now we support only one shard
 	for i := 0; i < core.GenesisShardNum; i++ {
 		shardIDs = append(shardIDs, uint32(i))
+		if i > 0 {
+			shardGroups = append(shardGroups, p2p.NewClientGroupIDByShardID(p2p.ShardID(i)))
+		}
 	}
 
 	// Do cross shard tx if there are more than one shard
@@ -202,7 +207,7 @@ func main() {
 			lock.Lock()
 			for shardID, txs := range shardIDTxsMap { // Send the txs to corresponding shards
 				go func(shardID uint32, txs types.Transactions) {
-					SendTxsToShard(clientNode, txs)
+					SendTxsToShard(clientNode, txs, shardID)
 				}(shardID, txs)
 			}
 			lock.Unlock()
@@ -213,14 +218,18 @@ func main() {
 
 	// Send a stop message to stop the nodes at the end
 	msg := proto_node.ConstructStopMessage()
-	clientNode.GetHost().SendMessageToGroups([]p2p.GroupID{p2p.GroupIDBeaconClient}, p2p_host.ConstructP2pMessage(byte(0), msg))
 	clientNode.GetHost().SendMessageToGroups([]p2p.GroupID{p2p.GroupIDBeacon}, p2p_host.ConstructP2pMessage(byte(0), msg))
+	clientNode.GetHost().SendMessageToGroups(shardGroups, p2p_host.ConstructP2pMessage(byte(0), msg))
 
 	time.Sleep(3 * time.Second)
 }
 
 // SendTxsToShard sends txs to shard, currently just to beacon shard
-func SendTxsToShard(clientNode *node.Node, txs types.Transactions) {
+func SendTxsToShard(clientNode *node.Node, txs types.Transactions, shardID uint32) {
 	msg := proto_node.ConstructTransactionListMessageAccount(txs)
-	clientNode.GetHost().SendMessageToGroups([]p2p.GroupID{p2p.GroupIDBeaconClient}, p2p_host.ConstructP2pMessage(byte(0), msg))
+	group := p2p.NewClientGroupIDByShardID(p2p.ShardID(shardID))
+	utils.GetLogInstance().Debug("SendTxsToShard", "shard", group)
+
+	clientNode.GetHost().SendMessageToGroups([]p2p.GroupID{group}, p2p_host.ConstructP2pMessage(byte(0), msg))
+	time.Sleep(time.Second)
 }
